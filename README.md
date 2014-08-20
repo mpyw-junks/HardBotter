@@ -79,7 +79,7 @@ TwistOAuthオブジェクト。
 
 #### 引数
 
-- (string) __*$status*__<br />ステータスオブジェクト。
+- (stdClass) __*$status*__<br />ステータスオブジェクト。
 - (array) __*$pairs*__<br />**「正規表現 => コールバック関数」** の形の配列。<br />コールバック関数の第1引数は **ステータスオブジェクト** になります。<br />コールバック関数の第2引数は **マッチ結果の配列** になります。<br />以下に例を示します。
 
 ```php
@@ -123,7 +123,7 @@ $pairs = array(
 
 #### 引数
 
-- (string) __*$status*__<br />ステータスオブジェクト。
+- (stdClass) __*$status*__<br />ステータスオブジェクト。
 
 
 ### final protected getLatestHome()<br />final protected getLatestMentions()<br />final protected getLatestSearch()
