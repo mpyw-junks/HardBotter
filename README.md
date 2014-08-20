@@ -17,7 +17,7 @@ PHPが書けないと作れないTwitterボット作成スクリプトです。
 
 - **HardBotterModel.php**<br />HardBotterModelクラスが記述されたファイルです。<br /><ins>**抽象クラス** なので、このファイルを編集する必要はありません。</ins>
 - **MyHardBotter.php**<br />具象クラスとしての実装例です。このファイルは必ず編集してください。<br />サンプルが書かれていますが、まっさらな状態から書き始めても構いません。
-- **TwistOAuth.php**<br />TwistOAuthライブラリを同梱しました。最新版である保証はありません。
+- **TwistOAuth.php**<br />**[TwistOAuth](https://github.com/mpyw/TwistOAuth)**ライブラリを同梱しました。最新版である保証はありません。
 
 メソッド一覧
 ===========
@@ -80,12 +80,12 @@ TwistOAuthオブジェクト。
 #### 引数
 
 - (string) __*$status*__<br />ステータスオブジェクト。
-- (array) __*$pairs*__<br />**「正規表現 => コールバック関数」** の形の配列。<br />以下に例を示します。
+- (array) __*$pairs*__<br />**「正規表現 => コールバック関数」** の形の配列。<br />コールバック関数の第1引数は **ステータスオブジェクト** になります。<br />コールバック関数の第2引数は **マッチ結果の配列** になります。<br />以下に例を示します。
 
 ```php
 $pairs = array(
     '/おはよう|こんにちは|こんばんは/' => function ($s, $m) {
-        return $$m[0] . '！';
+        return $s->user->name . 'さん' . $m[0] . '！';
     },
     '/何時/' => function ($s, $m) {
         return date_create('now', new DateTimeZone('Asia/Tokyo'))
@@ -186,7 +186,6 @@ $pairs = array(
 - (stdClass) __*$status*__<br />返信先のステータスオブジェクト。
 - (string) __*$text*__<br />ツイート本文。<br />**<ins>`@screen_name ` が自動的に先頭に付加されます。</ins>**
 - (string) __*$media\_path*__<br />画像ファイルへのパス。絶対パスを推奨。
-- (string) __*[$in\_reply\_to\_status\_id]*__<br />返信先のステータスID。
 
 #### 返り値
 
