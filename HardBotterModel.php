@@ -1,7 +1,7 @@
 <?php
 
 /**
- * HardBotterModel Version 0.1
+ * HardBotterModel Version 0.1.1
  * 
  * この抽象クラスを継承して利用します。
  */
@@ -378,7 +378,7 @@ abstract class HardBotterModel {
     
     private static function filterSingle($status) {
         $status->text       = htmlspecialchars_decode($status->text);
-        $status->user->name = str_replace(array('@', '＠'), '(at)', '');
+        $status->user->name = str_replace(array('@', '＠'), '(at)', $status->user->name);
         return $status;
     }
     

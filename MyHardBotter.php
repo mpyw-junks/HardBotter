@@ -3,9 +3,6 @@
 require __DIR__ . '/TwistOAuth.php';
 require __DIR__ . '/HardBotterModel.php';
 
-// 実行します 
-MyHardBotter::run('MyHardBotterLog.dat');
-
 /**
  * ここに自由に実装してください。
  * 但し、 getTwistOAuth() と action() は HardBotterModel.php 内
@@ -41,7 +38,7 @@ class MyHardBotter extends HardBotterModel {
             // マッチングを行う(先頭のものほど優先される)
             $text = $this->match($status, array(
                 '/おはよう|こんにちは|こんばんは/' => function ($s, $m) {
-                    return $m[0] . '！';
+                    return $s->user->name . 'さん' . $m[0] . '！';
                 },
                 '/何時/' => function ($s, $m) {
                     return date_create('now', new DateTimeZone('Asia/Tokyo'))
@@ -68,3 +65,6 @@ class MyHardBotter extends HardBotterModel {
     }
     
 }
+
+// 実行します 
+MyHardBotter::run('MyHardBotterLog.dat');
