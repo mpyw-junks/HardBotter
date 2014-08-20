@@ -53,7 +53,7 @@ TwistOAuthオブジェクト。
 - `Content-Type: text/plain; charset=utf-8` ヘッダを送出する。
 - タイムアウト秒数を無制限に設定する。
 - ログファイルからデータを読み出す。
-- ログファイルが存在しないときは存在しないときは新規作成する。
+- ログファイルが存在しないときは新規作成する。
 - 新規作成時には、過去のツイートに対する暴走を防ぐためにテストツイートを行う。<br />他の人から見えないように `@tos` に対するリプライとする。
 - ログファイルに最後にチェックしたツイートのステータスIDを記録する。
 
@@ -193,7 +193,7 @@ $pairs = array(
 失敗したときには **WARNING** を発生し、 `NULL` を返します。
 
 
-### final protected favorite()<br />final protected retweet()<br />final protected retweet()
+### final protected favorite()<br />final protected retweet()<br />final protected favrt()
 
 ふぁぼ/公式リツイート/ふぁぼ公(並列リクエスト)を実行します。
 
