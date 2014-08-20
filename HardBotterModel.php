@@ -1,7 +1,7 @@
 <?php
 
 /**
- * HardBotterModel Version 0.1.2
+ * HardBotterModel Version 0.2.0
  * 
  * この抽象クラスを継承して利用します。
  */
@@ -71,21 +71,36 @@ abstract class HardBotterModel {
     
     /**
      * PCRE正規表現でツイート内容を順番にマッチさせていき、
-     * マッチした時点でそのコールバック関数の返り値を返します。
+     * マッチした時点でそのクロージャの返り値を返します。
      * 先頭のものほど優先されます。
      * 
      * @param $status ステータスオブジェクト。
-     * @param $pairs  「正規表現 => コールバック」の形の連想配列。
+     * @param $pairs  「正規表現 => クロージャ」または
+     *                「正規表現 => 文字列」の形の連想配列。
      *                マッチングにはpreg_matchを用います。
-     *                コールバック関数は以下のような形です。
+     *                クロージャは以下のような形です。
      *                   function ($status, $matches) { ... }
-     * @return        コールバック関数の返り値を返します。
+     *                文字列には
+     *                   ${0}, ${1}, ${2}, ...
+     *                という置換用フォーマットを使うことが出来ます。
+     *                番号は $matches のオフセットに対応します。
+     * @return        クロージャの返り値または文字列を返します。
      *                マッチするものが何もなかったときはNULLを返します。
      */
     final protected static function match(stdClass $status, array $pairs) {
-        foreach ($pairs as $pattern => $function) {
+        foreach ($pairs as $pattern => $value) {
             if (preg_match($pattern, $status->text, $matches)) {
-                return $function($status, $matches);
+                if (is_scalar($value)) {
+                    return preg_replace_callback(
+                        '/\$\{(\d++)\}/',
+                        function ($m) use ($matches) {
+                            return isset($matches[$m[1]]) ? $matches[$m[1]] : '';
+                        },
+                        $value
+                    );
+                } else {
+                    return $value($status, $matches);
+                }
             }
         }
     }

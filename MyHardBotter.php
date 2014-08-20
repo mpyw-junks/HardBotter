@@ -37,9 +37,7 @@ class MyHardBotter extends HardBotterModel {
         foreach ($this->getLatestMentions() as $status) {
             // マッチングを行う(先頭のものほど優先される)
             $text = $this->match($status, array(
-                '/おはよう|こんにちは|こんばんは/' => function ($s, $m) {
-                    return $s->user->name . 'さん' . $m[0] . '！';
-                },
+                '/おはよう|こんにちは|こんばんは/' => '${0}！',
                 '/何時/' => function ($s, $m) {
                     return date_create('now', new DateTimeZone('Asia/Tokyo'))
                            ->format('H時i分だよー');
