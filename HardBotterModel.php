@@ -1,7 +1,7 @@
 <?php
 
 /**
- * HardBotterModel Version 0.2.0
+ * HardBotterModel Version 0.2.1
  * 
  * この抽象クラスを継承して利用します。
  */
@@ -92,7 +92,7 @@ abstract class HardBotterModel {
             if (preg_match($pattern, $status->text, $matches)) {
                 if (is_scalar($value)) {
                     return preg_replace_callback(
-                        '/\$\{(\d++)\}/',
+                        '/\$\{([^}]++)\}/',
                         function ($m) use ($matches) {
                             return isset($matches[$m[1]]) ? $matches[$m[1]] : '';
                         },
@@ -214,7 +214,7 @@ abstract class HardBotterModel {
             return self::filterSingle($status);
         } catch (Exception $e) {
             trigger_error(
-                'postTweet(): ' . $e->getMessage(),
+                'tweet(): ' . $e->getMessage(),
                 E_USER_WARNING
             );
         }
@@ -333,8 +333,8 @@ abstract class HardBotterModel {
     final protected function favrt(stdClass $status) {
         try {
             $statuses = TwistOAuth::curlMultiExec(array(
-                $this->getTwistOAuth()->curlPost('favorites/create', array('id' => $id)),
-                $this->getTwistOAuth()->curlPost("statuses/retweet/$id"),
+                $this->getTwistOAuth()->curlPost('favorites/create', array('id' => $status->id_str)),
+                $this->getTwistOAuth()->curlPost("statuses/retweet/{$status->id_str}"),
             ), true);
             echo 'favrt(): Success ' . $statuses[1]->id_str . "\n";
             return self::filterSingle($statuses[1]);

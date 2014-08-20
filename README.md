@@ -5,7 +5,7 @@ PHPが書けないと作れないTwitterボット作成スクリプトです。
 **[EasyBotter](http://pha22.net/twitterbot/)**とは何の関係もありません。  
 ある程度**[TwistOAuth](https://github.com/mpyw/TwistOAuth)**を使い慣れている人が対象です。
 
-バージョン 0.2.0
+バージョン 0.2.1
 
 動作環境
 =========
