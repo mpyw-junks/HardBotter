@@ -355,22 +355,22 @@ abstract class HardBotterModel {
             : $this->lastIdDefault
         ;
         $filtered = array();
-        foreach ($statuses as $status) {
-            if (isset($status->retweeted_status)) {
-                $status = $status->retweeted_status;
+        if ($statuses) {
+            foreach ($statuses as $status) {
+                if (isset($status->retweeted_status)) {
+                    $status = $status->retweeted_status;
+                }
+                if (
+                    bccomp($status->id_str, $lastIdStr) <= 0 ||
+                    isset($this->marked[$status->id_str])
+                ) {
+                    continue;
+                }
+                $filtered[] = self::filterSingle($status);
             }
-            if (
-                bccomp($status->id_str, $lastIdStr) <= 0 ||
-                isset($this->marked[$status->id_str])
-            ) {
-                continue;
-            }
-            $filtered[] = self::filterSingle($status);
-        }
-        if ($filtered) {
-            $this->lastIds[$name] = $filtered[0]->id_str;
-            if (bccomp($filtered[0]->id_str, $this->lastIdDefault) > 0) {
-                $this->lastIdDefault = $filtered[0]->id_str;
+            $this->lastIds[$name] = $statuses[0]->id_str;
+            if (bccomp($statuses[0]->id_str, $this->lastIdDefault) > 0) {
+                $this->lastIdDefault = $statuses[0]->id_str;
             }
         }
         return $filtered;
