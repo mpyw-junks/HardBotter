@@ -1,7 +1,7 @@
 <?php
 
 /**
- * HardBotterModel Version 0.1.1
+ * HardBotterModel Version 0.1.2
  * 
  * この抽象クラスを継承して利用します。
  */
@@ -359,10 +359,10 @@ abstract class HardBotterModel {
             if (isset($status->retweeted_status)) {
                 $status = $status->retweeted_status;
             }
-            if (bccomp($status->id_str, $lastIdStr) <= 0) {
-                break;
-            }
-            if (isset($this->marked[$status->id_str])) {
+            if (
+                bccomp($status->id_str, $lastIdStr) <= 0 ||
+                isset($this->marked[$status->id_str])
+            ) {
                 continue;
             }
             $filtered[] = self::filterSingle($status);
