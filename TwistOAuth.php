@@ -1,7 +1,7 @@
 <?php
 
 /* 
- * TwistOAuth Version 2.5.8
+ * TwistOAuth Version 2.6.0
  * 
  * @author  CertaiN
  * @github  https://github.com/mpyw/TwistOAuth
@@ -377,7 +377,7 @@ final class TwistOAuth {
     }
     
     /**
-     * Execute streaming GET request.
+     * Execute streaming POST request.
      *
      * @param string   $url      full or partial endpoint URL.
      *                           e.g. "statuses/sample", "https://stream.twitter.com/1.1/statuses/sample.json"
@@ -536,7 +536,7 @@ final class TwistOAuth {
     }
     
     /**
-     * Prepare cURL resource for streaming GET request.
+     * Prepare cURL resource for streaming POST request.
      *
      * @param string   $url      full or partial endpoint URL.
      *                           e.g. "statuses/sample", "https://stream.twitter.com/1.1/statuses/sample.json"
@@ -577,8 +577,10 @@ final class TwistOAuth {
         }
         $ch = self::curlInit($proxy);
         curl_setopt_array($ch, array(
-            CURLOPT_HTTPHEADER     => $this->getAuthorization($url, 'GET', $params, 0),
-            CURLOPT_URL            => $url . '?' . http_build_query($params, '', '&'),
+            CURLOPT_HTTPHEADER     => $this->getAuthorization($url, 'POST', $params, 0),
+            CURLOPT_URL            => $url,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query($params, '', '&'),
             CURLOPT_TIMEOUT        => 0,
             CURLOPT_WRITEFUNCTION  => function ($ch, $str) use ($callback, $decode) {
                 static $first = true;
@@ -799,11 +801,9 @@ final class TwistOAuth {
      * @throws TwistException
      */
     private static function decode($ch, $response) {
-        $ch       = self::validateCurl('$ch', $ch);
-        $response = self::validateString('$response', $response);
-        $info     = curl_getinfo($ch);
         self::checkCurlError($ch);
-        if (func_get_arg(1) === null) {
+        $info = curl_getinfo($ch);
+        if ($response === null) {
             throw new TwistException('Failed to receive response.', $info['http_code']);
         }
         if ($response === '') {
@@ -992,8 +992,14 @@ final class TwistOAuth {
                     'https://api.twitter.com/1.1/friends/ids.json',
                 'friends/list' =>
                     'https://api.twitter.com/1.1/friends/list.json',
+                'friendships/accept' =>
+                    'https://api.twitter.com/1.1/friendships/accept.json',
+                'friendships/accept_all' =>
+                    'https://api.twitter.com/1.1/friendships/accept_all.json',
                 'friendships/create' =>
                     'https://api.twitter.com/1.1/friendships/create.json',
+                'friendships/deny' =>
+                    'https://api.twitter.com/1.1/friendships/deny.json',
                 'friendships/destroy' =>
                     'https://api.twitter.com/1.1/friendships/destroy.json',
                 'friendships/incoming' =>
@@ -1338,7 +1344,7 @@ final class TwistOAuth {
                     unset($params[$key]);
                     continue;
                 }
-                $params[$key] = self::validateString("\$name[$key]", $value);
+                $params[$key] = self::validateString("{$name}[$key]", $value);
             }
             return $params;
         }
@@ -1363,11 +1369,8 @@ final class TwistOAuth {
      * @return resource cURL
      */
     private static function validateCurl($name, $ch) {
-        switch (true) {
-            case !is_resource($ch):
-            case stripos($type = get_resource_type($ch), 'curl') === false:
-            case stripos($type, 'multi') !== false:
-                throw new InvalidArgumentException("The value of $name must be a valid cURL resource.");
+        if (!is_resource($ch) || get_resource_type($ch) !== 'curl') {
+            throw new InvalidArgumentException("The value of $name must be a valid cURL resource.");
         }
         return $ch;
     }
