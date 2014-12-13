@@ -1,6 +1,15 @@
 <?php
 
-require __DIR__ . '/TwistOAuth.php';
+// 初回実行時のみ最新版TwistOAuthをインストールします
+if (!is_file(__DIR__ . '/TwistOAuth.phar')) {
+    call_user_func(function () {
+        $local  = fopen(__DIR__ . '/TwistOAuth.phar', 'wb');
+        $remote = fopen('https://raw.githubusercontent.com/mpyw/TwistOAuth/master/build/TwistOAuth.phar', 'rb');
+        stream_copy_to_stream($remote, $local);
+    });
+}
+
+require __DIR__ . '/TwistOAuth.phar';
 require __DIR__ . '/HardBotterModel.php';
 
 /**
