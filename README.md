@@ -17,7 +17,7 @@ PHPが書けないと作れないTwitterボット作成スクリプトです。
 
 - **HardBotterModel.php**<br />HardBotterModelクラスが記述されたファイルです。<br /><ins>**抽象クラス** なので、このファイルを編集する必要はありません。</ins>
 - **MyHardBotter.php**<br />具象クラスとしての実装例です。このファイルは必ず編集してください。<br />サンプルが書かれていますが、まっさらな状態から書き始めても構いません。
-- **TwistOAuth.php**<br />**[TwistOAuth](https://github.com/mpyw/TwistOAuth)**ライブラリを同梱しました。最新版である保証はありません。
+- **TwistOAuth.phar**<br />デフォルトの`MyHardBotter.php`を実行すると最初の1回目のみGitHubからダウンロードが行われます。自動もしくは手動での設置が必要です。
 
 メソッド一覧
 ===========
