@@ -241,7 +241,7 @@ abstract class HardBotterModel {
      * textプロパティに含まれるHTML特殊文字はデコードされます。
      * 失敗時にはNULLがセットされ、エラーログに記録されます。
      * 
-     * @param  $status                  ツイート内容。
+     * @param  $text                    ツイート内容。
      * @param  $media_path              画像ファイルへのパス(絶対パス推奨)。
      * @param  [$in_reply_to_status_id] 返信先のステータスID。
      * @return                          ツイートしたステータスオブジェクト。
