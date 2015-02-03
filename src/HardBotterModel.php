@@ -248,7 +248,7 @@ abstract class HardBotterModel {
      */
     final protected function tweetWithMedia($text, $media_path, $in_reply_to_status_id = null) {
         try {
-            $statis = $this->getTwistOAuth()->postMultipart('statuses/update_with_media', array(
+            $status = $this->getTwistOAuth()->postMultipart('statuses/update_with_media', array(
                 'status'                => $text,
                 '@media[]'              => $media_path,
                 'in_reply_to_status_id' => $in_reply_to_status_id,
