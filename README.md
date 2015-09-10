@@ -26,7 +26,7 @@ PHPが書けないと作れないTwitterボット作成スクリプトです。
 
 - 説明書となるのでソースを読んでください。
 
-### [src/IBotHelper.php](https://github.com/mpyw/HardBotter/blob/master/src/IBotEssential.php)
+### [src/IBotHelper.php](https://github.com/mpyw/HardBotter/blob/master/src/IBotHelper.php)
 
 `Bot` クラスが実装しているヘルパーメソッド群です。
 
