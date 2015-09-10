@@ -8,7 +8,7 @@ PHPが書けないと作れないTwitterボット作成スクリプトです。
 インストール
 =========
 
-`composer require mpyw/hardbotter`
+`composer require mpyw/hardbotter:@dev`
 
 ソースファイル
 ============
