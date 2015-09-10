@@ -80,7 +80,7 @@ interface IBotHelper {
     public function tweet($text);
     public function favorite(\stdClass $status);
     public function retweet(\stdClass $status);
-    public function follow($user_id_or_screen_name);
-    public function unfollow($user_id_or_screen_name);
+    public function follow($user_id);
+    public function unfollow($user_id);
 
 }
