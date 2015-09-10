@@ -1,0 +1,21 @@
+{
+    "name": "mpyw/hard-botter",
+    "description": "Yet another EasyBotter",
+    "type": "library",
+    "require": {
+        "mpyw/twistoauth": "@dev"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "mpyw",
+            "email": "ryosuke_i_628@yahoo.co.jp"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "mpyw\\HardBotter\\": "src/"
+        }
+    }
+}
