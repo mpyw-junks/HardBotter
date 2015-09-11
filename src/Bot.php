@@ -377,7 +377,7 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * 結果出力用
      */
-    public static function out($msg) {
+    private static function out($msg) {
         if (PHP_SAPI === 'cli') {
             echo $msg . PHP_EOL;
         } else {
