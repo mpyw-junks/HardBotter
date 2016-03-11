@@ -362,6 +362,13 @@ class Bot implements IBotEssential, IbotHelper {
         }
         return $result;
     }
+    public function mediaTweet($text, $path) {
+        $result = $this->postMultipart('statuses/update_with_media', array('status' => $text, '@media[]' => $path));
+        if ($result !== false) {
+            self::out('Tweeted: ' . $result->text);
+        }
+        return $result;
+    }
 
     /**
      * $limit + $span と現在を比較して期限が過ぎているかどうかをチェック

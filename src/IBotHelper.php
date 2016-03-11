@@ -82,5 +82,6 @@ interface IBotHelper {
     public function retweet(\stdClass $status);
     public function follow($user_id);
     public function unfollow($user_id);
+    public function mediaTweet($text, $path);
 
 }
