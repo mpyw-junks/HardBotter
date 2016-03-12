@@ -2,7 +2,7 @@
 
 namespace mpyw\HardBotter;
 
-class Bot implements IBotEssential, IbotHelper {
+class Bot implements IBotEssential, IBotHelper {
 
     private $to;
     private $file;
