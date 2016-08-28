@@ -263,51 +263,6 @@ class Bot implements IBotEssential, IbotHelper
     }
 
     /**
-     * 相互フォロー
-     */
-    final public function forceMutuals($followable_page_count = INF)
-    {
-        list($friends, $followers) = array_map(
-            'array_flip',
-            [
-                $this->collect('friends/ids', $followable_page_count, ['stringify_ids' => true]),
-                $this->collect('followers/ids', $followable_page_count, ['stringify_ids' => true]),
-            ]
-        );
-        $friends_only = array_diff_key($friends, $followers);
-        $followers_only = array_diff_key($followers, $friends);
-        $result = true;
-        foreach ($friends_only as $id => $_) {
-            $result = $this->unfollow($id) && $result;
-        }
-        foreach ($followers_only as $id => $_) {
-            $result = $this->follow($id) && $result;
-        }
-        return $result;
-    }
-    final public function forceMutualsAsync($followable_page_count = INF)
-    {
-        list($friends, $followers) = array_map(
-            'array_flip',
-            (yield [
-                $this->collectAsync('friends/ids', $followable_page_count, ['stringify_ids' => true]),
-                $this->collectAsync('followers/ids', $followable_page_count, ['stringify_ids' => true]),
-            ])
-        );
-        $friends_only = array_diff_key($friends, $followers);
-        $followers_only = array_diff_key($followers, $friends);
-        $result = true;
-        $tasks = [];
-        foreach ($friends_only as $id => $_) {
-            $tasks[] = $this->unfollowAsync($id);
-        }
-        foreach ($followers_only as $id => $_) {
-            $tasks[] = $this->followAsync($id);
-        }
-        yield Co::RETURN_WITH => !in_array(false, (yield $tasks), true);
-    }
-
-    /**
      * その他の補助
      */
     public function tweet($text)
@@ -355,38 +310,6 @@ class Bot implements IBotEssential, IbotHelper
         $result = (yield $this->postAsync('statuses/retweet', ['id' => $status->id_str]));
         if ($result !== false) {
             self::out('RETWEETED: ' . $status->text);
-        }
-        yield Co::RETURN_WITH => $result;
-    }
-    public function follow($user_id)
-    {
-        $result = $this->post('friendships/create', ['user_id' => $user_id]);
-        if ($result !== false) {
-            self::out('FOLLOWED: @' . $result->screen_name);
-        }
-        return $result;
-    }
-    public function followAsync($user_id)
-    {
-        $result = (yield $this->postAsync('friendships/create', ['user_id' => $user_id]));
-        if ($result !== false) {
-            self::out('FOLLOWED: @' . $result->screen_name);
-        }
-        yield Co::RETURN_WITH => $result;
-    }
-    public function unfollow($user_id)
-    {
-        $result = $this->post('friendships/destroy', ['user_id' => $user_id]);
-        if ($result !== false) {
-            self::out('UNFOLLOWED: @' . $result->screen_name);
-        }
-        return $result;
-    }
-    public function unfollowAsync($user_id)
-    {
-        $result = (yield $this->postAsync('friendships/destroy', ['user_id' => $user_id]));
-        if ($result !== false) {
-            self::out('UNFOLLOWED: @' . $result->screen_name);
         }
         yield Co::RETURN_WITH => $result;
     }
