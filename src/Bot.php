@@ -86,22 +86,25 @@ class Bot implements IBotEssential, IbotHelper
         if (!is_callable($callback)) {
             throw new \BadMethodCallException("Call to undefined method mpyw\Cowitter\Client::$method()");
         }
+        return ((new ReflectionMethod($this->client, $method))->isGenerator())
+            ? $this->callAsync($method, $callback, $args)
+            : $this->call($method, $callback, $args);
+    }
+    private function call($method, $callback, $args)
+    {
         try {
             // レスポンスをフィルタリングして返す
-            $result = call_user_func_array($callback, $args);
-            return $result instanceof \Generator
-                ? $this->filterAsync($method, $result)
-                : $this->filter($method, $result);
+            return $this->filter($method, call_user_func_array($callback, $args));
         } catch (\RuntimeException $e) {
             // モードに応じて例外処理方法を分岐
             return $this->handleException($method, $e);
         }
     }
-    private function filterAsync($method, $task)
+    private function callAsync($method, $callback, $args)
     {
         try {
             // レスポンスをフィルタリングして返す
-            yield Co::RETURN_WITH => $this->filter($method, (yield $task));
+            yield Co::RETURN_WITH => $this->filter($method, (yield call_user_func_array($callback, $args)));
         } catch (\RuntimeException $e) {
             // モードに応じて例外処理方法を分岐
             yield Co::RETURN_WITH => $this->handleException($method, $e);

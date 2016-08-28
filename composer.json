@@ -3,7 +3,7 @@
     "description": "Yet another EasyBotter",
     "type": "library",
     "require": {
-        "mpyw/cowitter": "^1.0"
+        "mpyw/cowitter": "^1.0.1"
     },
     "license": "MIT",
     "authors": [
