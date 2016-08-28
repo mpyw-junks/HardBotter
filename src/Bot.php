@@ -2,12 +2,15 @@
 
 namespace mpyw\HardBotter;
 
-class Bot implements IBotEssential, IbotHelper {
+use mpyw\Cowitter\Client;
+use mpyw\Co\Co;
 
-    private $to;
+class Bot implements IBotEssential, IbotHelper
+{
+    private $client;
     private $file;
     private $prev;
-    private $marked = array();
+    private $marked = [];
     private $mark_limit = 10000;
     private $back_limit = 3600;
     private $get_error_mode = self::ERRMODE_EXCEPTION;
@@ -16,7 +19,10 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * コンストラクタ
      */
-    public function __construct(\TwistOAuth $to, $filename = 'stamp.json', $span = 0, $mark_limit = 10000, $back_limit = 3600) {
+    final public function __construct(
+        Client $client, $filename = 'stamp.json',
+        $span = 0, $mark_limit = 10000, $back_limit = 3600
+    ) {
         // ヘッダの送出
         if (!headers_sent()) {
             header('Content-Type: text/html; charset=UTF-8');
@@ -31,9 +37,9 @@ class Bot implements IBotEssential, IbotHelper {
             throw new \RuntimeException('Failed to lock file.');
         }
         // コンテンツを取得
-        ob_start();
-        $file->fpassthru();
-        $json = json_decode(ob_get_clean(), true);
+        $json = $file->getSize() > 0
+            ? json_decode($file->fread($file->getSize()), true)
+            : [];
         // JSONに前回実行時刻が保存されていた時
         if (isset($json['prev'])) {
             // 十分に時間が空いたかどうかをチェック
@@ -45,7 +51,7 @@ class Bot implements IBotEssential, IbotHelper {
         if (isset($json['marked'])) {
             $this->marked = array_map('filter_var', (array)$json['marked']);
         }
-        $this->to = $to;
+        $this->client = $client;
         $this->file = $file;
         $now = new \DateTime('now', new \DateTimeZone('UTC'));
         $this->prev = $now->format('r');
@@ -56,37 +62,53 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * デストラクタ
      */
-    final public function __destruct() {
+    final public function __destruct()
+    {
         $this->file->ftruncate(0);
-        $this->file->fwrite(json_encode(array(
+        $this->file->fwrite(json_encode([
             'prev' => $this->prev,
             // 収まりきらない古い情報は破棄する
             'marked' => array_slice($this->marked, -$this->mark_limit, $this->mark_limit, true),
-        )));
+        ]));
         $this->file->flock(LOCK_UN);
     }
 
     /**
-     * 間接的に TwistOAuth からコールするメソッド
+     * 間接的に mpyw\Cowitter\Client のメソッドをコールするメソッド
      */
-    final public function __call($method, array $args) {
-        $callback = array($this->to, $method);
+    final public function __call($method, array $args)
+    {
+        $callback = [$this->client, $method];
         if (!is_callable($callback)) {
-            throw new \BadMethodCallException("Call to undefined method TwistOAuth::$method()");
+            throw new \BadMethodCallException("Call to undefined method mpyw\Cowitter\Client::$method()");
         }
         try {
             // レスポンスをフィルタリングして返す
-            return $this->filter($method, call_user_func_array($callback, $args));
-        } catch (\TwistException $e) {
+            $result = call_user_func_array($callback, $args);
+            return $result instanceof \Generator
+                ? $this->filterAsync($method, $result)
+                : $this->filter($method, $result);
+        } catch (\RuntimeException $e) {
             // モードに応じて例外処理方法を分岐
             return $this->handleException($method, $e);
         }
     }
+    private function filterAsync($method, $task)
+    {
+        try {
+            // レスポンスをフィルタリングして返す
+            yield Co::RETURN_WITH => $this->filter($method, (yield $task));
+        } catch (\RuntimeException $e) {
+            // モードに応じて例外処理方法を分岐
+            yield Co::RETURN_WITH => $this->handleException($method, $e);
+        }
+    }
 
     /**
-     * TwistOAuthレスポンスのフィルタメソッド
+     * レスポンスのフィルタメソッド
      */
-    private function filter($method, $variable) {
+    private function filter($method, $variable)
+    {
         static $callback;
         if (!$callback) {
             // 全てのステータスをarray_walk_recursiveを利用して処理するクロージャ
@@ -101,18 +123,18 @@ class Bot implements IBotEssential, IbotHelper {
             };
         }
         // get, post, postMultipart 以外のメソッドは処理しない
-        if (!preg_match('/^(?:get|post|postMultipart)$/i', $method)) {
+        if (!preg_match('/^(?:get|post|postMultipart)(?:Async)?$/i', $method)) {
             return $variable;
         }
-        // 一度連想配列に変換した後再帰的にフィルタリング処理をかけ、もとに戻す
+        // 一度連想配列に変換した後再帰的にフィルタリング処理をかけ，もとに戻す
         $variable = (array)json_decode(json_encode($variable), true);
         array_walk_recursive($variable, $callback);
         $variable = json_decode(json_encode($variable));
         // get 以外のメソッドはこれ以上処理しない
-        if (strcasecmp($method, 'get')) {
+        if (!preg_match('/^get(?:Async)?$/i', $method)) {
             return $variable;
         }
-        // 取得してきたものがステータス配列あるいはステータス配列を含むオブジェクトの場合、
+        // 取得してきたものがステータス配列あるいはステータス配列を含むオブジェクトの場合，
         // その配列を処理対象にする
         if (is_array($variable)) {
             $list = &$variable;
@@ -139,8 +161,9 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * 例外ハンドラ
      */
-    private function handleException($method, \TwistException $e) {
-        if (!strcasecmp($method, 'get')) {
+    private function handleException($method, \RuntimeException $e)
+    {
+        if (preg_match('/^get(?:Async)?$/i', $method)) {
             // getのとき
             if ($this->get_error_mode & self::ERRMODE_WARNING) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
@@ -149,7 +172,7 @@ class Bot implements IBotEssential, IbotHelper {
                 throw $e;
             }
             return false;
-        } elseif (preg_match('/^(?:post|postMultipart)$/i', $method)) {
+        } elseif (preg_match('/^(?:post|postMultipart)(?:Async)?$/i', $method)) {
             // postのとき
             if ($this->post_error_mode & self::ERRMODE_WARNING) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
@@ -184,7 +207,8 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * パターンマッチング
      */
-    final public static function match($text, array $pairs) {
+    final public static function match($text, array $pairs)
+    {
         static $callback;
         if (!$callback) {
             // 文字列で指定された場合に置換フォーマットをパースして処理するクロージャ
@@ -213,21 +237,34 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * リプライ
      */
-    final public function reply($text, \stdClass $original_status, $prepend_screen_name = true) {
-        $result = $this->post('statuses/update', array(
+    final public function reply($text, \stdClass $original_status, $prepend_screen_name = true)
+    {
+        $result = $this->post('statuses/update', [
             'status' => $prepend_screen_name ? "@{$original_status->user->screen_name} $text" : $text,
             'in_reply_to_status_id' => $original_status->id_str,
-        ));
+        ]);
         if ($result !== false) {
-            self::out('Updated: ' . $result->text);
+            self::out('UPDATED: ' . $result->text);
         }
         return $result;
+    }
+    final public function replyAsync($text, \stdClass $original_status, $prepend_screen_name = true)
+    {
+        $result = (yield $this->postAsync('statuses/update', [
+            'status' => $prepend_screen_name ? "@{$original_status->user->screen_name} $text" : $text,
+            'in_reply_to_status_id' => $original_status->id_str,
+        ]));
+        if ($result !== false) {
+            self::out('UPDATED: ' . $result->text);
+        }
+        yield Co::RETURN_WITH => $result;
     }
 
     /**
      * オートページャ
      */
-    final public function collect($endpoint, $followable_page_count, array $params = array()) {
+    final public function collect($endpoint, $followable_page_count, array $params = [])
+    {
         // カーソルに-1を指定する（不要な場合に余分なパラメータとしてつけても問題ない）
         $params['cursor'] = '-1';
         // 初回の結果を取得
@@ -236,7 +273,7 @@ class Bot implements IBotEssential, IbotHelper {
             return false;
         }
         if (is_array($result)) {
-            // 結果自体が配列である場合、max_idでのページングを行う
+            // 結果自体が配列である場合，max_idでのページングを行う
             // 配列を結果として格納
             $list = $result;
             for ($i = 0; $i < $followable_page_count; ++$i) {
@@ -256,7 +293,7 @@ class Bot implements IBotEssential, IbotHelper {
             }
             return $list;
         } elseif (isset($result->statuses) && is_array($result->statuses)) {
-            // 結果statusesプロパティが配列である場合、max_idでのページングを行う
+            // 結果statusesプロパティが配列である場合，max_idでのページングを行う
             // 配列部分のみを結果として格納
             $list = $result->statuses;
             for ($i = 0; $i < $followable_page_count; ++$i) {
@@ -276,7 +313,7 @@ class Bot implements IBotEssential, IbotHelper {
             }
             return $list;
         } elseif (isset($result->next_cursor_str)) {
-            // カーソルが存在する場合、cursorでのページングを行う
+            // カーソルが存在する場合，cursorでのページングを行う
             // 配列であるプロパティの名前を求める
             $prop = key(array_filter((array)$result, 'is_array'));
             // 配列部分のみを結果として格納
@@ -301,17 +338,94 @@ class Bot implements IBotEssential, IbotHelper {
             throw new \BadMethodCallException('Response is not compatible.');
         }
     }
+    final public function collectAsync($endpoint, $followable_page_count, array $params = [])
+    {
+        // カーソルに-1を指定する（不要な場合に余分なパラメータとしてつけても問題ない）
+        $params['cursor'] = '-1';
+        // 初回の結果を取得
+        $result = (yield $this->getAsync($endpoint, $params));
+        if ($result === false) {
+            yield Co::RETURN_WITH => false;
+        }
+        if (is_array($result)) {
+            // 結果自体が配列である場合，max_idでのページングを行う
+            // 配列を結果として格納
+            $list = $result;
+            for ($i = 0; $i < $followable_page_count; ++$i) {
+                $end = end($result);
+                if (!isset($end->id_str)) {
+                    // 追うものがなくなった時点で脱出
+                    break;
+                }
+                // 最終IDから1を引く
+                $params['max_id'] = bcsub($end->id_str, 1);
+                // 次の結果を取得してマージ
+                $result = (yield $this->getAsync($endpoint, $params));
+                if ($result === false) {
+                    yield Co::RETURN_WITH => false;
+                }
+                $list = array_merge($list, $result);
+            }
+            yield Co::RETURN_WITH => $list;
+        } elseif (isset($result->statuses) && is_array($result->statuses)) {
+            // 結果statusesプロパティが配列である場合，max_idでのページングを行う
+            // 配列部分のみを結果として格納
+            $list = $result->statuses;
+            for ($i = 0; $i < $followable_page_count; ++$i) {
+                $end = end($result->statuses);
+                if (!isset($end->id_str)) {
+                    // 追うものがなくなった時点で脱出
+                    break;
+                }
+                // 最終IDから1を引く
+                $params['max_id'] = bcsub($end->id_str, 1);
+                // 次の結果を取得してマージ
+                $result = $this->get($endpoint, $params);
+                if ($result === false) {
+                    yield Co::RETURN_WITH => false;
+                }
+                $list = array_merge($list, $result->statuses);
+            }
+            yield Co::RETURN_WITH => $list;
+        } elseif (isset($result->next_cursor_str)) {
+            // カーソルが存在する場合，cursorでのページングを行う
+            // 配列であるプロパティの名前を求める
+            $prop = key(array_filter((array)$result, 'is_array'));
+            // 配列部分のみを結果として格納
+            $list = $result->$prop;
+            for ($i = 0; $i < $followable_page_count; ++$i) {
+                if (empty($result->next_cursor_str)) {
+                    // 追うものがなくなった時点で脱出
+                    yield Co::RETURN_WITH => $list;
+                }
+                // カーソルを進める
+                $params['cursor'] = $params->next_cursor_str;
+                // 次の結果を取得してマージ
+                $result = $this->get($endpoint, $params);
+                if ($result === false) {
+                    yield Co::RETURN_WITH => false;
+                }
+                $list = array_merge($list, $result->$prop);
+            }
+            yield Co::RETURN_WITH => $list;
+        } else {
+            // それ以外の場合はそもそもこのメソッドを使うべきではない
+            throw new \BadMethodCallException('Response is not compatible.');
+        }
+    }
 
     /**
      * 相互フォロー
      */
-    final public function forceMutuals($followable_page_count = INF) {
-        $friends = array_flip($this->collect(
-            'friends/ids', $followable_page_count, array('stringify_ids' => true)
-        ));
-        $followers = array_flip($this->collect(
-            'followers/ids', $followable_page_count, array('stringify_ids' => true)
-        ));
+    final public function forceMutuals($followable_page_count = INF)
+    {
+        list($friends, $followers) = array_map(
+            'array_flip',
+            [
+                $this->collect('friends/ids', $followable_page_count, ['stringify_ids' => true]),
+                $this->collect('followers/ids', $followable_page_count, ['stringify_ids' => true]),
+            ]
+        );
         $friends_only = array_diff_key($friends, $followers);
         $followers_only = array_diff_key($followers, $friends);
         $result = true;
@@ -323,44 +437,110 @@ class Bot implements IBotEssential, IbotHelper {
         }
         return $result;
     }
+    final public function forceMutualsAsync($followable_page_count = INF)
+    {
+        list($friends, $followers) = array_map(
+            'array_flip',
+            (yield [
+                $this->collectAsync('friends/ids', $followable_page_count, ['stringify_ids' => true]),
+                $this->collectAsync('followers/ids', $followable_page_count, ['stringify_ids' => true]),
+            ])
+        );
+        $friends_only = array_diff_key($friends, $followers);
+        $followers_only = array_diff_key($followers, $friends);
+        $result = true;
+        $tasks = [];
+        foreach ($friends_only as $id => $_) {
+            $tasks[] = $this->unfollowAsync($id);
+        }
+        foreach ($followers_only as $id => $_) {
+            $tasks[] = $this->followAsync($id);
+        }
+        yield Co::RETURN_WITH => !in_array(false, (yield $tasks), true);
+    }
 
     /**
      * その他の補助
      */
-    public function tweet($text) {
-        $result = $this->post('statuses/update', array('status' => $text));
+    public function tweet($text)
+    {
+        $result = $this->post('statuses/update', ['status' => $text]);
         if ($result !== false) {
-            self::out('Tweeted: ' . $result->text);
+            self::out('TWEETED: ' . $result->text);
         }
         return $result;
     }
-    public function favorite(\stdClass $status) {
-        $result = $this->post('favorites/create', array('id' => $status->id_str));
+    public function tweetAsync($text)
+    {
+        $result = (yield $this->postAsync('statuses/update', ['status' => $text]));
         if ($result !== false) {
-            self::out('Favorited: ' . $result->text);
+            self::out('TWEETED: ' . $result->text);
+        }
+        yield Co::RETURN_WITH => $result;
+    }
+    public function favorite(\stdClass $status)
+    {
+        $result = $this->post('favorites/create', ['id' => $status->id_str]);
+        if ($result !== false) {
+            self::out('FAVORITED: ' . $result->text);
         }
         return $result;
     }
-    public function retweet(\stdClass $status) {
-        $result = $this->post('statuses/retweet', array('id' => $status->id_str));
+    public function favoriteAsync(\stdClass $status)
+    {
+        $result = (yield $this->postAsync('favorites/create', ['id' => $status->id_str]));
         if ($result !== false) {
-            self::out('Retweeted: ' . $status->text);
+            self::out('FAVORITED: ' . $result->text);
+        }
+        yield Co::RETURN_WITH => $result;
+    }
+    public function retweet(\stdClass $status)
+    {
+        $result = $this->post('statuses/retweet', ['id' => $status->id_str]);
+        if ($result !== false) {
+            self::out('RETWEETED: ' . $status->text);
         }
         return $result;
     }
-    public function follow($user_id) {
-        $result = $this->post('friendships/create', array('user_id' => $user_id));
+    public function retweetAsync(\stdClass $status)
+    {
+        $result = (yield $this->postAsync('statuses/retweet', ['id' => $status->id_str]));
         if ($result !== false) {
-            self::out('Followed: @' . $result->screen_name);
+            self::out('RETWEETED: ' . $status->text);
+        }
+        yield Co::RETURN_WITH => $result;
+    }
+    public function follow($user_id)
+    {
+        $result = $this->post('friendships/create', ['user_id' => $user_id]);
+        if ($result !== false) {
+            self::out('FOLLOWED: @' . $result->screen_name);
         }
         return $result;
     }
-    public function unfollow($user_id) {
-        $result = $this->post('friendships/destroy', array('user_id' => $user_id));
+    public function followAsync($user_id)
+    {
+        $result = (yield $this->postAsync('friendships/create', ['user_id' => $user_id]));
         if ($result !== false) {
-            self::out('Unfollowed: @' . $result->screen_name);
+            self::out('FOLLOWED: @' . $result->screen_name);
+        }
+        yield Co::RETURN_WITH => $result;
+    }
+    public function unfollow($user_id)
+    {
+        $result = $this->post('friendships/destroy', ['user_id' => $user_id]);
+        if ($result !== false) {
+            self::out('UNFOLLOWED: @' . $result->screen_name);
         }
         return $result;
+    }
+    public function unfollowAsync($user_id)
+    {
+        $result = (yield $this->postAsync('friendships/destroy', ['user_id' => $user_id]));
+        if ($result !== false) {
+            self::out('UNFOLLOWED: @' . $result->screen_name);
+        }
+        yield Co::RETURN_WITH => $result;
     }
 
     /**
@@ -377,7 +557,8 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * 結果出力用
      */
-    private static function out($msg) {
+    private static function out($msg)
+    {
         if (PHP_SAPI === 'cli') {
             echo $msg . PHP_EOL;
         } else {
@@ -388,11 +569,12 @@ class Bot implements IBotEssential, IbotHelper {
     /**
      * clone および serialize 対策
      */
-    final public function __sleep() {
+    final public function __sleep()
+    {
         throw new \BadMethodCallException('Instances are not serializable.');
     }
-    final public function __clone() {
+    final public function __clone()
+    {
         throw new \BadMethodCallException('Instances are not clonable.');
     }
-
 }

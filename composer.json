@@ -3,7 +3,7 @@
     "description": "Yet another EasyBotter",
     "type": "library",
     "require": {
-        "mpyw/twistoauth": "@dev"
+        "mpyw/cowitter": "^1.0"
     },
     "license": "MIT",
     "authors": [
@@ -12,7 +12,6 @@
             "email": "ryosuke_i_628@yahoo.co.jp"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "mpyw\\HardBotter\\": "src/"
