@@ -21,7 +21,7 @@ trait InterceptorTrait
         if (!is_callable($callback)) {
             throw new \BadMethodCallException("Call to undefined method mpyw\Cowitter\Client::$method()");
         }
-        return ((new ReflectionMethod($this->client, $method))->isGenerator())
+        return ((new \ReflectionMethod($this->client, $method))->isGenerator())
             ? $this->callAsync($method, $callback, $args)
             : $this->call($method, $callback, $args);
     }
