@@ -3,7 +3,8 @@
     "description": "Yet another EasyBotter",
     "type": "library",
     "require": {
-        "mpyw/cowitter": "^1.0.1"
+        "mpyw/cowitter": "^1.0.1",
+        "vlucas/phpdotenv": "^2.3"
     },
     "license": "MIT",
     "authors": [
