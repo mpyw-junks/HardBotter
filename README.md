@@ -36,7 +36,7 @@ Twitterクライアントとしては，[TwistOAuth](https://github.com/mpyw/Twi
 サンプル
 =======
 
-`example/.env` を生成して
+`examples/.env` を生成して
 
 ```
 CONSUMER_KEY="****"
@@ -46,5 +46,5 @@ ACCESS_TOKEN_SECRET="****"
 TIMEZONE="Asia/Tokyo"
 ```
 
-のように編集した上で `example/run.php` を定期実行してください．  
+のように編集した上で `examples/run.php` を定期実行してください．  
 なお，このライブラリはcronで定期的に動作させるBot向けのものですが，ストリーミングAPIを利用したリアルタイム系のBotにも対応できます．
