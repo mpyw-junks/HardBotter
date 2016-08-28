@@ -4,6 +4,10 @@ namespace mpyw\HardBotter\Traits;
 
 use mpyw\Co\Co;
 
+/**
+ * @method mixed get($endpoint, array $params = [])
+ * @method \Generator getAsync($endpoint, array $params = [])
+ */
 trait CollectorTrait
 {
     abstract public function __call($method, array $args);

@@ -121,6 +121,10 @@ class Bot implements IBotEssential, IbotHelper
     {
         return $this->mark_limit;
     }
+    public function getClient()
+    {
+        return $this->client;
+    }
 
     /**
      * clone および serialize 対策

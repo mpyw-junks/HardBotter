@@ -4,6 +4,10 @@ namespace mpyw\HardBotter\Traits;
 
 use mpyw\Co\Co;
 
+/**
+ * @method mixed post($endpoint, array $params = [])
+ * @method \Generator postAsync($endpoint, array $params = [])
+ */
 trait TweetManagerTrait
 {
     abstract public static function out($msg);

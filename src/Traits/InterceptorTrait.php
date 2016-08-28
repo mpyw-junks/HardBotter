@@ -6,6 +6,7 @@ use mpyw\Co\Co;
 
 trait InterceptorTrait
 {
+    abstract public function getClient();
     abstract public function getGetErrorMode();
     abstract public function getPostErrorMode();
     abstract public function getMarkedStatusIds();
@@ -17,11 +18,12 @@ trait InterceptorTrait
      */
     public function __call($method, array $args)
     {
-        $callback = [$this->client, $method];
+        $client = $this->getClient();
+        $callback = [$client, $method];
         if (!is_callable($callback)) {
             throw new \BadMethodCallException("Call to undefined method mpyw\Cowitter\Client::$method()");
         }
-        return ((new \ReflectionMethod($this->client, $method))->isGenerator())
+        return ((new \ReflectionMethod($client, $method))->isGenerator())
             ? $this->callAsync($method, $callback, $args)
             : $this->call($method, $callback, $args);
     }
