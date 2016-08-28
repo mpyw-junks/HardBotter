@@ -2,3 +2,5 @@
 composer.lock
 stamp.json
 .env
+
+tests/_output/*
