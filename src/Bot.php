@@ -17,6 +17,7 @@ class Bot implements IBotEssential, IbotHelper
     private $post_error_mode = self::ERRMODE_WARNING;
 
     use Traits\CollectorTrait;
+    use Traits\FollowManagerTrait;
 
     /**
      * コンストラクタ
