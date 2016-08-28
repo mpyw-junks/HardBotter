@@ -2,7 +2,6 @@
 
 namespace mpyw\HardBotter\Traits;
 
-use mpyw\Cowitter\Client;
 use mpyw\Co\Co;
 
 trait CollectorTrait
