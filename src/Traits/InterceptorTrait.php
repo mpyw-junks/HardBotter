@@ -50,7 +50,9 @@ trait InterceptorTrait
         } catch (\RuntimeException $e) {
             yield Co::RETURN_WITH => $this->handleException($method, $e);
         }
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * 結果をフィルタリングするメソッド
@@ -58,7 +60,7 @@ trait InterceptorTrait
     protected function filter($method, $variable)
     {
         // get, post, postMultipart 以外のメソッドは処理しない
-        if (!preg_match('/^(?:get|post|postMultipart)(?:Async)?$/i', $method)) {
+        if (!preg_match('/^(?:get2?|post|postMultipart)(?:Async)?$/i', $method)) {
             return $variable;
         }
 
@@ -68,7 +70,7 @@ trait InterceptorTrait
         $variable = json_decode(json_encode($variable));
 
         // get 以外のメソッドはこれ以上処理しない
-        if (!preg_match('/^get(?:Async)?$/i', $method)) {
+        if (!preg_match('/^get2?(?:Async)?$/i', $method)) {
             return $variable;
         }
 
@@ -82,17 +84,20 @@ trait InterceptorTrait
             return $variable;
         }
 
-        // マークされているツイートと期限切れのツイートを除外
         $marked = $this->getMarkedStatusIds();
         $limit = $this->getBackLimitSeconds();
         foreach ($list as $i => $status) {
+            // GET users/lookup などは無視
             if (!isset($status->text, $status->id_str, $status->created_at)) {
                 continue;
             }
+            // マークされているツイートと期限切れのツイートを除外
             if (isset($marked[$status->id_str]) || static::expired($status->created_at, $limit)) {
                 unset($list[$i]);
             }
         }
+        // キーを振り直す
+        $list = array_values($list);
 
         return $variable;
     }
@@ -105,7 +110,7 @@ trait InterceptorTrait
         $get_error_mode = $this->getGetErrorMode();
         $post_error_mode = $this->getPostErrorMode();
 
-        if (preg_match('/^get(?:Async)?$/i', $method)) {
+        if (preg_match('/^get2?(?:Out)?(?:Async)?$/i', $method)) {
             // getのとき
             if ($get_error_mode & self::ERRMODE_WARNING) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
@@ -116,7 +121,7 @@ trait InterceptorTrait
             return false;
         }
 
-        if (preg_match('/^(?:post|postMultipart)(?:Async)?$/i', $method)) {
+        if (preg_match('/^(?:(?:post|postMultipart)(?:Out)?|(?:upload(?:|Image|Anime|Video)))(?:Async)?$/i', $method)) {
             // postのとき
             if ($post_error_mode & self::ERRMODE_WARNING) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
@@ -141,7 +146,7 @@ trait InterceptorTrait
             $value = htmlspecialchars_decode($value, ENT_NOQUOTES);
         } elseif ($key === 'name' || $key === 'description') {
             // プロフィールの名前および詳細に含まれるスクリーンネームの「@」を「(at)」に置換する
-            $value = preg_replace('/@(?=\w{1,15}+)/', '(at)', $value);
+            $value = preg_replace('/@(?=\w{1,15}+(?!\w))/', '(at)', $value);
         }
     }
 }
