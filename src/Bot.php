@@ -4,7 +4,7 @@ namespace mpyw\HardBotter;
 
 use mpyw\Cowitter\ClientInterface;
 
-class Bot implements IBotEssential, IbotHelper
+class Bot implements IBotEssential, IBotHelper
 {
     private $client;
     private $file;
