@@ -16,7 +16,6 @@ build:
 
   dependencies:
     before:
-      - 'sudo apt-get install -y lsof'
       - 'composer install'
       - './vendor/bin/codecept build'
 
