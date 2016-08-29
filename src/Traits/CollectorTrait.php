@@ -2,7 +2,7 @@
 
 namespace mpyw\HardBotter\Traits;
 
-use mpyw\Co\Co;
+use mpyw\Co\CoInterface;
 
 /**
  * @method mixed get($endpoint, array $params = [])
@@ -27,7 +27,7 @@ trait CollectorTrait
             return $formatted;
         }
         // 次のリクエストを実行してマージした結果を返す
-        $children = $this->collect($endpoint, $followable_page_count - 1, $params);
+        $children = $this->collect($endpoint, $followable_page_count - 1, $next_params);
         return $children !== false ? array_merge($formatted, $children) : $formatted;
     }
 
@@ -37,18 +37,20 @@ trait CollectorTrait
         $params += ['cursor' => '-1'];
         // 初回の結果を取得
         if (false === $result = (yield $this->getAsync($endpoint, $params))) {
-            yield Co::RETURN_WITH => false;
+            yield CoInterface::RETURN_WITH => false;
         }
         // 整形結果と次のリクエストに必要なパラメータを取得
         list($formatted, $next_params) = static::getFormattedResultAndNextParams($result, $params);
         // 次のリクエストが不必要であれば整形結果を返す
         if ($next_params === null || $followable_page_count < 1) {
-            yield Co::RETURN_WITH => $formatted;
+            yield CoInterface::RETURN_WITH => $formatted;
         }
         // 次のリクエストを実行してマージした結果を返す
-        $children = (yield $this->collectAsync($endpoint, $followable_page_count - 1, $params));
-        yield Co::RETURN_WITH => $children !== false ? array_merge($formatted, $children) : $formatted;
+        $children = (yield $this->collectAsync($endpoint, $followable_page_count - 1, $next_params));
+        yield CoInterface::RETURN_WITH => $children !== false ? array_merge($formatted, $children) : $formatted;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     protected static function getFormattedResultAndNextParams($result, array $params)
     {
