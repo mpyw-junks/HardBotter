@@ -1,4 +1,4 @@
-# HardBotter
+# HardBotter [![Build Status](https://travis-ci.org/mpyw/HardBotter.svg?branch=master)](https://travis-ci.org/mpyw/HardBotter) [![Coverage Status](https://coveralls.io/repos/github/mpyw/HardBotter/badge.svg?branch=master)](https://coveralls.io/github/mpyw/HardBotter?branch=master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mpyw/HardBotter/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mpyw/HardBotter/?branch=master)
 
 「PHPが書けないと作れない」Cron系のTwitterボット作成支援ライブラリです．自由な書き方ができ，カスタマイズ性が高いのが特長です．
 
