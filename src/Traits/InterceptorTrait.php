@@ -121,7 +121,7 @@ trait InterceptorTrait
             return false;
         }
 
-        if (preg_match('/^(?:(?:post|postMultipart)(?:Out)?|(?:upload(?:|Image|Anime|Video)))(?:Async)?$/i', $method)) {
+        if (preg_match('/^(?:(?:post|postMultipart)(?:Out)?|(?:upload(?:|Image|AnimeGIF|Video)))(?:Async)?$/i', $method)) {
             // postのとき
             if ($post_error_mode & self::ERRMODE_WARNING) {
                 trigger_error($e->getMessage(), E_USER_WARNING);
