@@ -50,14 +50,14 @@ Co::wait(function () use ($bot) {
             },
 
             '/占い|おみくじ/' => function ($m) use ($bot, $status) {
-                $list = array(
+                $list = [
                     '大吉',
                     '吉', '吉',
                     '中吉', '中吉', '中吉',
                     '小吉', '小吉', '小吉',
                     '末吉', '末吉',
                     '凶',
-                );
+                ];
                 return $bot->replyAsync('あなたの運勢は' . $list[array_rand($list)] . 'です', $status);
             },
 
