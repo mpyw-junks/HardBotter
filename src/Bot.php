@@ -73,7 +73,7 @@ class Bot implements IBotEssential, IBotHelper
     /**
      * デストラクタ
      */
-    final public function __destruct()
+    public function __destruct()
     {
         $this->file->ftruncate(0);
         $this->file->fwrite(json_encode([

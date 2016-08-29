@@ -57,7 +57,9 @@ trait SharedUtilityTrait
         if (PHP_SAPI === 'cli') {
             echo $msg . PHP_EOL;
         } else {
+            // @codeCoverageIgnoreStart
             echo htmlspecialchars($msg, ENT_QUOTES, 'UTF-8') . '<br>' . PHP_EOL;
+            // @codeCoverageIgnoreEnd
         }
     }
 }
