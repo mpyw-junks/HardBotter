@@ -2,8 +2,7 @@
 
 namespace mpyw\HardBotter;
 
-use mpyw\Cowitter\Client;
-use mpyw\Co\Co;
+use mpyw\Cowitter\ClientInterface;
 
 class Bot implements IBotEssential, IbotHelper
 {
@@ -27,7 +26,7 @@ class Bot implements IBotEssential, IbotHelper
      * 副作用が大量にあるので注意
      */
     public function __construct(
-        Client $client, $filename = 'stamp.json',
+        ClientInterface $client, $filename = 'stamp.json',
         $span = 0, $mark_limit = 10000, $back_limit = 3600
     ) {
         // ヘッダの送出
