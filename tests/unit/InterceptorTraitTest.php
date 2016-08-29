@@ -394,6 +394,40 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals($expected, $actual);
     }
 
+    public function testMarkedOrExpiredStatusesExcludedOnSearches()
+    {
+        $expected = json_decode('{
+            "statuses": [
+                {
+                    "user": {
+                        "id_str": "333",
+                        "screen_name": "ce4k",
+                        "name": "John"
+                    },
+                    "id_str": "3333",
+                    "text": "Hello",
+                    "created_at": "2000-10-10 12:27:00"
+                },
+                {
+                    "user": {
+                        "id_str": "444",
+                        "screen_name": "te4k",
+                        "name": "Bob"
+                    },
+                    "id_str": "2222",
+                    "text": "lol",
+                    "created_at": "2000-10-10 12:26:00"
+                }
+            ]
+        }');
+        $bot = $this->getBot();
+        $bot->marked['5555'] = true;
+        $bot->marked['4444'] = true;
+        $bot->back_limit = 250;
+        $actual = $bot->get('search/tweets');
+        $this->assertEquals($expected, $actual);
+    }
+
     public function testOtherMethodSuccess()
     {
         $bot = $this->getBot()->withOptions([CURLOPT_USERAGENT => '&lt;&gt;']);
