@@ -40,9 +40,10 @@ interface IBotEssential
     public function mark(\stdClass $status);
 
     /**
-     * 間接的に呼び出された mpyw\Cowitter\Client::get/post/postMultipart について
-     * エラーハンドリングの方法を設定できます．設定次第で毎回 try ~ catch を設ける必要が
-     * 無くなります．
+     * 間接的に呼び出された mpyw\Cowitter\Client::get/get2/post/postMultipart
+     * あるいはそのAsync版，またはOAuthEcho版，またupload系メソッド4種について，
+     * エラーハンドリングの方法を設定できます．
+     * 設定次第で毎回 try ~ catch を設ける必要が無くなります．
      *
      * @param $mode Bot::ERRMODE_SILENT … 失敗時には何も出力せず，FALSEを返します．
      *              Bot::ERRMODE_WARNING … 失敗時には WARNING を出力し，FALSEを返します．(postのデフォルト)
@@ -55,7 +56,10 @@ interface IBotEssential
     /**
      * マジックメソッド__callを利用してあらゆる
      * mpyw\Cowitter\Client のメソッドを間接的に呼び出すことが出来ます．
-     * このクラスを経由して呼び出されたものは…
+     * このクラスを経由して呼び出されたもののうち，
+     * mpyw\Cowitter\Client::get/get2/post/postMultipart
+     * あるいはそのAsync版の返り値について，
+     *
      *    ・マーク済みのツイートは除外されます．
      *    ・$back_limit より古いツイートは除外されます．
      *    ・ツイート本文に含まれる「&amp;」「&lt;」「&gt;」はデコードされ，HTMLからテキストにフォーマットが変わります．
