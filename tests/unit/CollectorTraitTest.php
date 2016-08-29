@@ -266,7 +266,7 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
                 "created_at": "2000-10-10 12:28:00"
             }
         ]');
-        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 0, ['count' => 2]));
+        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 0, ['count' => 2]);
         $this->assertEquals($expected, $actual);
 
         $expected = json_decode('[
@@ -311,7 +311,7 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
                 "created_at": "2000-10-10 12:26:00"
             }
         ]');
-        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 1, ['count' => 2]));
+        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 1, ['count' => 2]);
         $this->assertEquals($expected, $actual);
 
         $expected = json_decode('[
@@ -366,19 +366,19 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
                 "created_at": "2000-10-10 12:25:00"
             }
         ]');
-        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 10, ['count' => 2]));
+        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     });}
 
     public function testCollectAsyncHomeTimelineErrorSlilent()
     {Co::wait(function () {
         $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
-        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
+        $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
         $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
         $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
-        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
+        $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
         $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     });}
@@ -386,13 +386,13 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
     public function testCollectAsyncHomeTimelineErrorWarning()
     {Co::wait(function () {
         $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
-        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
+        $actual = yield $this->getBot(1)->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
         $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG'] = [];
         $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
-        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
+        $actual = yield $this->getBot(1)->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     });}
@@ -401,7 +401,7 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
     {Co::wait(function () {
         $this->setExpectedException(\RuntimeException::class, 'Error');
         $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
-        $this->getBot(2)->collect('statuses/home_timeline', 10, ['count' => 2]);
+        yield $this->getBot(2)->collectAsync('statuses/home_timeline', 10, ['count' => 2]);
     });}
 
     public function testCollectSearchTweets()
@@ -516,7 +516,7 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
                 "created_at": "2000-10-10 12:25:00"
             }
         ]');
-        $actual = (yield $this->getBot()->collectAsync('search/tweets', 10, ['count' => 2]));
+        $actual = yield $this->getBot()->collectAsync('search/tweets', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     });}
 
@@ -530,7 +530,7 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
     public function testCollectAsyncFollowersIds()
     {Co::wait(function () {
         $expected = ['1', '2', '3', '4', '5', '6', '7'];
-        $actual = $this->getBot()->collect('followers/ids', 10, ['count' => 2]);
+        $actual = yield $this->getBot()->collectAsync('followers/ids', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     });}
 
