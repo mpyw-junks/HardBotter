@@ -145,6 +145,21 @@ class PseudoClient extends Client
         return $sets[$params['cursor']];
     }
 
+    protected function GET_Friends_Ids(array $params)
+    {
+        $sets = [
+            -1 => (object)[
+                'next_cursor_str' => '1',
+                'ids' => ['4', '5', '6'],
+            ],
+            1 => (object)[
+                'next_cursor_str' => '0',
+                'ids' => ['11'],
+            ]
+        ];
+        return $sets[$params['cursor']];
+    }
+
     protected function GET_Users_Lookup(array $params)
     {
         return json_decode('[{

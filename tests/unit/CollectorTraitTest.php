@@ -70,7 +70,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
                 return $this->back_limit;
             }
 
-            protected static function expired($past, $interval) {
+            protected static function expired($past, $interval)
+            {
                 $past = new \DateTimeImmutable($past, new \DateTimeZone('UTC'));
                 $future = $past->add(new \DateInterval("PT{$interval}S"));
                 $now = new \DateTimeImmutable('2000-10-10 12:30:00', new \DateTimeZone('UTC'));

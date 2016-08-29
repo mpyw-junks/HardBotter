@@ -41,7 +41,8 @@ trait SharedUtilityTrait
     /**
      * $past + $interval と現在を比較して期限が過ぎているかどうかをチェック
      */
-    protected static function expired($past, $interval) {
+    protected static function expired($past, $interval)
+    {
         $past = new \DateTimeImmutable($past, new \DateTimeZone('UTC'));
         $future = $past->add(new \DateInterval("PT{$interval}S"));
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
