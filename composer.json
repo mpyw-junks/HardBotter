@@ -3,6 +3,7 @@
     "description": "Yet another EasyBotter",
     "type": "library",
     "require": {
+        "php": ">=5.5.0",
         "mpyw/cowitter": "^1.0.1",
         "vlucas/phpdotenv": "^2.3",
         "aza/math": "^1.0"
