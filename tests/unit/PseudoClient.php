@@ -189,12 +189,18 @@ class PseudoClient extends Client
 
     protected function POST_Friendships_create(array $params)
     {
-        return (object)['id_str' => $params['user_id']];
+        return (object)[
+            'id_str' => $params['user_id'],
+            'screen_name' => $params['user_id'],
+        ];
     }
 
     protected function POST_Friendships_destroy(array $params)
     {
-        return (object)['id_str' => $params['user_id']];
+        return (object)[
+            'id_str' => $params['user_id'],
+            'screen_name' => $params['user_id'],
+        ];
     }
 
     public function oauthForRequestToken($oauth_callback = null)

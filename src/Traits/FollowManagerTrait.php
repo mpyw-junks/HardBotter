@@ -41,7 +41,9 @@ trait FollowManagerTrait
             array_map([$this, 'followAsync'], $followers_only)
         ));
         yield Co::RETURN_WITH => !in_array(false, $results, true);
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     protected static function getFriendsOnlyAndFollowersOnly(array $friends, array $followers)
     {
@@ -70,7 +72,9 @@ trait FollowManagerTrait
             static::out('FOLLOWED: @' . $result->screen_name);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     public function unfollow($user_id)
     {
@@ -88,5 +92,7 @@ trait FollowManagerTrait
             static::out('UNFOLLOWED: @' . $result->screen_name);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 }
