@@ -21,7 +21,7 @@ class PseudoClient extends Client
                         "screen_name": "re4k",
                         "name": "omfg @mpyw"
                     },
-                    "id_str": "1111",
+                    "id_str": "5555",
                     "text": "&lt;This is holy &amp; shit dummy text&gt;",
                     "created_at": "2000-10-10 12:29:00"
                 },
@@ -31,7 +31,7 @@ class PseudoClient extends Client
                         "screen_name": "0xk",
                         "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
                     },
-                    "id_str": "2222",
+                    "id_str": "4444",
                     "text": "Hi",
                     "created_at": "2000-10-10 12:28:00"
                 },
@@ -51,7 +51,7 @@ class PseudoClient extends Client
                         "screen_name": "te4k",
                         "name": "Bob"
                     },
-                    "id_str": "4444",
+                    "id_str": "2222",
                     "text": "lol",
                     "created_at": "2000-10-10 12:26:00"
                 },
@@ -61,7 +61,7 @@ class PseudoClient extends Client
                         "screen_name": "cat",
                         "name": "Alice"
                     },
-                    "id_str": "5555",
+                    "id_str": "1111",
                     "text": "Nyan",
                     "created_at": "2000-10-10 12:25:00"
                 }

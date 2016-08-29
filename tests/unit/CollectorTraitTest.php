@@ -1,13 +1,12 @@
 <?php
 
-namespace mpyw\HardBotterTest\CollectorTraitTest;
+namespace mpyw\HardBotter\Traits;
+
+require_once __DIR__ . '/PseudoClient.php';
+require_once __DIR__ . '/PseudoFunctions.php';
 
 use mpyw\Co\Co;
-
-function trigger_error($message, $level)
-{
-    $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG'][] = [$message, $level];
-}
+use mpyw\HardBotterTest\PseudoClient;
 
 /**
  * @requires PHP 7.0
@@ -18,8 +17,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
 
     public function _before()
     {
-        $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG'] = [];
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = PHP_INT_MAX;
+        $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG'] = [];
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = PHP_INT_MAX;
     }
 
     public function _after()
@@ -30,312 +29,507 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
     {
         return new class($get_error_mode)
         {
-            use \mpyw\HardBotter\Traits\CollectorTrait;
-
             const ERRMODE_SILENT    = 0;
             const ERRMODE_WARNING   = 1;
             const ERRMODE_EXCEPTION = 2;
 
-            protected $get_error_mode;
+            public $get_error_mode = 2;
+            public $post_error_mode = 1;
+            public $back_limit = 3600;
+            public $marked = [];
 
-            public function __construct($get_error_mode)
-            {
+            use InterceptorTrait;
+            use CollectorTrait;
+
+            public function __construct($get_error_mode) {
                 $this->get_error_mode = $get_error_mode;
             }
 
-            public function __call($method, array $args)
+            public function getClient()
             {
-                $method .= 'Impl';
-                return $this->$method(...$args);
+                return new PseudoClient([]);
             }
 
-            protected function getImpl($endpoint, array $params)
+            public function getGetErrorMode()
             {
-                try {
-                    $method = 'GET_' . str_replace(['_', '/'], ['', '_'], ucwords($endpoint, '_'));
-                    return $this->$method($params);
-                } catch (\RuntimeException $e) {
-                    if ($this->get_error_mode === static::ERRMODE_WARNING) {
-                        trigger_error($e->getMessage(), E_USER_WARNING);
-                    }
-                    if ($this->get_error_mode === static::ERRMODE_EXCEPTION) {
-                        throw $e;
-                    }
-                    return false;
-                }
+                return $this->get_error_mode;
             }
 
-            protected function getAsyncImpl($endpoint, array $params)
+            public function getPostErrorMode()
             {
-                yield;
-                try {
-                    $method = 'GET_' . str_replace(['_', '/'], ['', '_'], ucwords($endpoint, '_'));
-                    return $this->$method($params);
-                } catch (\RuntimeException $e) {
-                    if ($this->get_error_mode === static::ERRMODE_WARNING) {
-                        trigger_error($e->getMessage(), E_USER_WARNING);
-                    }
-                    if ($this->get_error_mode === static::ERRMODE_EXCEPTION) {
-                        throw $e;
-                    }
-                    return false;
-                }
+                return $this->post_error_mode;
             }
 
-            protected function GET_Statuses_HomeTimeline(array $params)
+            public function getMarkedStatusIds()
             {
-                if ($GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER']-- < 1) {
-                    throw new \RuntimeException('Error');
-                }
-                $statuses = [
-                    (object)['id_str' => '10'],
-                    (object)['id_str' => '9'],
-                    (object)['id_str' => '8'],
-                    (object)['id_str' => '7'],
-                    (object)['id_str' => '6'],
-                    (object)['id_str' => '5'],
-                    (object)['id_str' => '4'],
-                ];
-                $params += ['max_id' => '114514'];
-                return array_slice(array_filter($statuses, function (\stdClass $status) use ($params) {
-                    return (int)$status->id_str <= (int)$params['max_id'];
-                }), 0, 3);
+                return $this->marked;
             }
 
-            protected function GET_Search_Tweets(array $params)
+            public function getBackLimitSeconds()
             {
-                if ($GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER']-- < 1) {
-                    throw new \RuntimeException('Error');
-                }
-                $result = (object)[
-                    'statuses' => [
-                        (object)['id_str' => '10'],
-                        (object)['id_str' => '9'],
-                        (object)['id_str' => '8'],
-                        (object)['id_str' => '7'],
-                        (object)['id_str' => '6'],
-                        (object)['id_str' => '5'],
-                        (object)['id_str' => '4'],
-                    ]
-                ];
-                $params += ['max_id' => '114514'];
-                $result->statuses = array_slice(array_filter($result->statuses, function (\stdClass $status) use ($params) {
-                    return (int)$status->id_str <= (int)$params['max_id'];
-                }), 0, 3);
-                return $result;
+                return $this->back_limit;
             }
 
-            protected function GET_Followers_Ids(array $params)
-            {
-                if ($GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER']-- < 1) {
-                    throw new \RuntimeException('Error');
-                }
-                $sets = [
-                    -1 => (object)[
-                        'next_cursor_str' => '1',
-                        'ids' => ['10', '9', '8'],
-                    ],
-                    1 => (object)[
-                        'next_cursor_str' => '2',
-                        'ids' => ['7', '6', '5'],
-                    ],
-                    2 => (object)[
-                        'next_cursor_str' => '0',
-                        'ids' => ['4'],
-                    ],
-                ];
-                return $sets[$params['cursor']];
-            }
-
-            protected function GET_Account_VerifyCredentials(array $params)
-            {
-                return (object)[
-                    'id_str' => '114514',
-                    'name' => 'Homo',
-                ];
+            protected static function expired($past, $interval) {
+                $past = new \DateTimeImmutable($past, new \DateTimeZone('UTC'));
+                $future = $past->add(new \DateInterval("PT{$interval}S"));
+                $now = new \DateTimeImmutable('2000-10-10 12:30:00', new \DateTimeZone('UTC'));
+                return $future <= $now;
             }
         };
     }
 
     public function testCollectHomeTimeline()
     {
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
-        $actual = $this->getBot()->collect('statuses/home_timeline', 0);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            }
+        ]');
+        $actual = $this->getBot()->collect('statuses/home_timeline', 0, ['count' => 2]);
         $this->assertEquals($expected, $actual);
 
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-        ];
-        $actual = $this->getBot()->collect('statuses/home_timeline', 1);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            }
+        ]');
+        $actual = $this->getBot()->collect('statuses/home_timeline', 1, ['count' => 2]);
         $this->assertEquals($expected, $actual);
 
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-            (object)['id_str' => '4'],
-        ];
-        $actual = $this->getBot()->collect('statuses/home_timeline', 2);
-        $this->assertEquals($expected, $actual);
-        $actual = $this->getBot()->collect('statuses/home_timeline', 3);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            },
+            {
+                "user": {
+                    "id_str": "555",
+                    "screen_name": "cat",
+                    "name": "Alice"
+                },
+                "id_str": "1111",
+                "text": "Nyan",
+                "created_at": "2000-10-10 12:25:00"
+            }
+        ]');
+        $actual = $this->getBot()->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     }
 
     public function testCollectHomeTimelineErrorSlilent()
     {
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 0;
-        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
+        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     }
 
     public function testCollectHomeTimelineErrorWarning()
     {
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 0;
-        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
+        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG'] = [];
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     }
 
     public function testCollectHomeTimelineErrorException()
     {
         $this->setExpectedException(\RuntimeException::class, 'Error');
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $this->getBot(2)->collect('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $this->getBot(2)->collect('statuses/home_timeline', 10, ['count' => 2]);
     }
 
     public function testCollectAsyncHomeTimeline()
     {Co::wait(function () {
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
-        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 0);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            }
+        ]');
+        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 0, ['count' => 2]));
         $this->assertEquals($expected, $actual);
 
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-        ];
-        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 1);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            }
+        ]');
+        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 1, ['count' => 2]));
         $this->assertEquals($expected, $actual);
 
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-            (object)['id_str' => '4'],
-        ];
-        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 2);
-        $this->assertEquals($expected, $actual);
-        $actual = yield $this->getBot()->collectAsync('statuses/home_timeline', 3);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            },
+            {
+                "user": {
+                    "id_str": "555",
+                    "screen_name": "cat",
+                    "name": "Alice"
+                },
+                "id_str": "1111",
+                "text": "Nyan",
+                "created_at": "2000-10-10 12:25:00"
+            }
+        ]');
+        $actual = (yield $this->getBot()->collectAsync('statuses/home_timeline', 10, ['count' => 2]));
         $this->assertEquals($expected, $actual);
     });}
 
     public function testCollectAsyncHomeTimelineErrorSlilent()
     {Co::wait(function () {
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 0;
-        $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
+        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $actual = $this->getBot(0)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEmpty($GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     });}
 
     public function testCollectAsyncHomeTimelineErrorWarning()
     {Co::wait(function () {
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 0;
-        $actual = yield $this->getBot(1)->collectAsync('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 0;
+        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
 
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG'] = [];
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $actual = $this->getBot(1)->collect('statuses/home_timeline', 10, ['count' => 2]);
         $this->assertFalse($actual);
-        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
+        $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS['HARDBOTTER-TRIGGER-ERROR-LOG']);
     });}
 
     public function testCollectAsyncHomeTimelineErrorException()
     {Co::wait(function () {
         $this->setExpectedException(\RuntimeException::class, 'Error');
-        $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        yield $this->getBot(2)->collectAsync('statuses/home_timeline', 10);
+        $GLOBALS['HARDBOTTER-ERROR-COUNTER'] = 1;
+        $this->getBot(2)->collect('statuses/home_timeline', 10, ['count' => 2]);
     });}
 
     public function testCollectSearchTweets()
     {
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-            (object)['id_str' => '4'],
-        ];
-        $actual = $this->getBot()->collect('search/tweets', 10);
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            },
+            {
+                "user": {
+                    "id_str": "555",
+                    "screen_name": "cat",
+                    "name": "Alice"
+                },
+                "id_str": "1111",
+                "text": "Nyan",
+                "created_at": "2000-10-10 12:25:00"
+            }
+        ]');
+        $actual = $this->getBot()->collect('search/tweets', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     }
 
     public function testCollectAsyncSearchTweets()
     {Co::wait(function () {
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-            (object)['id_str' => '7'],
-            (object)['id_str' => '6'],
-            (object)['id_str' => '5'],
-            (object)['id_str' => '4'],
-        ];
-        $actual = (yield $this->getBot()->collectAsync('search/tweets', 10));
+        $expected = json_decode('[
+            {
+                "user": {
+                    "id_str": "111",
+                    "screen_name": "re4k",
+                    "name": "omfg (at)mpyw"
+                },
+                "id_str": "5555",
+                "text": "<This is holy & shit dummy text>",
+                "created_at": "2000-10-10 12:29:00"
+            },
+            {
+                "user": {
+                    "id_str": "222",
+                    "screen_name": "0xk",
+                    "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
+                },
+                "id_str": "4444",
+                "text": "Hi",
+                "created_at": "2000-10-10 12:28:00"
+            },
+            {
+                "user": {
+                    "id_str": "333",
+                    "screen_name": "ce4k",
+                    "name": "John"
+                },
+                "id_str": "3333",
+                "text": "Hello",
+                "created_at": "2000-10-10 12:27:00"
+            },
+            {
+                "user": {
+                    "id_str": "444",
+                    "screen_name": "te4k",
+                    "name": "Bob"
+                },
+                "id_str": "2222",
+                "text": "lol",
+                "created_at": "2000-10-10 12:26:00"
+            },
+            {
+                "user": {
+                    "id_str": "555",
+                    "screen_name": "cat",
+                    "name": "Alice"
+                },
+                "id_str": "1111",
+                "text": "Nyan",
+                "created_at": "2000-10-10 12:25:00"
+            }
+        ]');
+        $actual = (yield $this->getBot()->collectAsync('search/tweets', 10, ['count' => 2]));
         $this->assertEquals($expected, $actual);
     });}
 
     public function testCollectFollowersIds()
     {
-        $expected = ['10', '9', '8', '7', '6', '5', '4'];
-        $actual = $this->getBot()->collect('followers/ids', 10);
+        $expected = ['1', '2', '3', '4', '5', '6', '7'];
+        $actual = $this->getBot()->collect('followers/ids', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     }
 
     public function testCollectAsyncFollowersIds()
     {Co::wait(function () {
-        $expected = ['10', '9', '8', '7', '6', '5', '4'];
-        $actual = $this->getBot()->collect('followers/ids', 10);
+        $expected = ['1', '2', '3', '4', '5', '6', '7'];
+        $actual = $this->getBot()->collect('followers/ids', 10, ['count' => 2]);
         $this->assertEquals($expected, $actual);
     });}
 

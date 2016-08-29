@@ -25,7 +25,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
     {
     }
 
-    public function getBot($get_error_mode = 2)
+    public function getBot()
     {
         return new class
         {
@@ -83,7 +83,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "re4k",
                     "name": "omfg (at)mpyw"
                 },
-                "id_str": "1111",
+                "id_str": "5555",
                 "text": "<This is holy & shit dummy text>",
                 "created_at": "2000-10-10 12:29:00"
             },
@@ -93,7 +93,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "0xk",
                     "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
                 },
-                "id_str": "2222",
+                "id_str": "4444",
                 "text": "Hi",
                 "created_at": "2000-10-10 12:28:00"
             },
@@ -113,7 +113,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "te4k",
                     "name": "Bob"
                 },
-                "id_str": "4444",
+                "id_str": "2222",
                 "text": "lol",
                 "created_at": "2000-10-10 12:26:00"
             },
@@ -123,7 +123,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "cat",
                     "name": "Alice"
                 },
-                "id_str": "5555",
+                "id_str": "1111",
                 "text": "Nyan",
                 "created_at": "2000-10-10 12:25:00"
             }
@@ -168,7 +168,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "re4k",
                     "name": "omfg (at)mpyw"
                 },
-                "id_str": "1111",
+                "id_str": "5555",
                 "text": "<This is holy & shit dummy text>",
                 "created_at": "2000-10-10 12:29:00"
             },
@@ -178,7 +178,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "0xk",
                     "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
                 },
-                "id_str": "2222",
+                "id_str": "4444",
                 "text": "Hi",
                 "created_at": "2000-10-10 12:28:00"
             },
@@ -198,7 +198,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "te4k",
                     "name": "Bob"
                 },
-                "id_str": "4444",
+                "id_str": "2222",
                 "text": "lol",
                 "created_at": "2000-10-10 12:26:00"
             },
@@ -208,7 +208,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "cat",
                     "name": "Alice"
                 },
-                "id_str": "5555",
+                "id_str": "1111",
                 "text": "Nyan",
                 "created_at": "2000-10-10 12:25:00"
             }
@@ -290,7 +290,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                         "screen_name": "re4k",
                         "name": "omfg (at)mpyw"
                     },
-                    "id_str": "1111",
+                    "id_str": "5555",
                     "text": "<This is holy & shit dummy text>",
                     "created_at": "2000-10-10 12:29:00"
                 },
@@ -300,7 +300,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                         "screen_name": "0xk",
                         "name": "omfg @mpywwwwwwwwwwwwwwwwwwwwwww"
                     },
-                    "id_str": "2222",
+                    "id_str": "4444",
                     "text": "Hi",
                     "created_at": "2000-10-10 12:28:00"
                 },
@@ -320,7 +320,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                         "screen_name": "te4k",
                         "name": "Bob"
                     },
-                    "id_str": "4444",
+                    "id_str": "2222",
                     "text": "lol",
                     "created_at": "2000-10-10 12:26:00"
                 },
@@ -330,7 +330,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                         "screen_name": "cat",
                         "name": "Alice"
                     },
-                    "id_str": "5555",
+                    "id_str": "1111",
                     "text": "Nyan",
                     "created_at": "2000-10-10 12:25:00"
                 }
@@ -340,7 +340,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals($expected, $actual);
     }
 
-    public function testUsersLookUp()
+    public function testGetUsersLookUp()
     {
         $expected = json_decode('[{
             "id_str": "111",
@@ -351,7 +351,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals($expected, $actual);
     }
 
-    public function testFollowersIds()
+    public function testGetFollowersIds()
     {
         $expected = json_decode('{
             "next_cursor_str": "1",
@@ -380,7 +380,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "te4k",
                     "name": "Bob"
                 },
-                "id_str": "4444",
+                "id_str": "2222",
                 "text": "lol",
                 "created_at": "2000-10-10 12:26:00"
             },
@@ -390,14 +390,14 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                     "screen_name": "cat",
                     "name": "Alice"
                 },
-                "id_str": "5555",
+                "id_str": "1111",
                 "text": "Nyan",
                 "created_at": "2000-10-10 12:25:00"
             }
         ]');
         $bot = $this->getBot();
-        $bot->marked['1111'] = true;
-        $bot->marked['2222'] = true;
+        $bot->marked['5555'] = true;
+        $bot->marked['4444'] = true;
         $actual = $bot->get('statuses/home_timeline');
         $this->assertEquals($expected, $actual);
     }
