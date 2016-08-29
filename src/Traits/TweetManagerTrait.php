@@ -10,7 +10,7 @@ use mpyw\Co\Co;
  */
 trait TweetManagerTrait
 {
-    abstract public static function out($msg);
+    abstract protected static function out($msg);
     abstract public function __call($method, array $args);
 
     public function reply($text, \stdClass $original_status, $prepend_screen_name = true)

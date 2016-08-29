@@ -10,7 +10,7 @@ use mpyw\Co\Co;
  */
 trait FollowManagerTrait
 {
-    abstract public static function out($msg);
+    abstract protected static function out($msg);
     abstract public function __call($method, array $args);
     abstract public function collect($endpoint, $followable_page_count, array $params = []);
     abstract public function collectAsync($endpoint, $followable_page_count, array $params = []);
