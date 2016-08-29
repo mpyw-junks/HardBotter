@@ -4,8 +4,7 @@
     "type": "library",
     "require": {
         "mpyw/cowitter": "^1.0.1",
-        "vlucas/phpdotenv": "^2.3",
-        "lib-curl": ">=7.20.0"
+        "vlucas/phpdotenv": "^2.3"
     },
     "require-dev": {
         "php": ">=7.0.0",
