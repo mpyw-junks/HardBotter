@@ -362,7 +362,7 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals($expected, $actual);
     }
 
-    public function testMarkedStatusesExcluded()
+    public function testMarkedOrExpiredStatusesExcluded()
     {
         $expected = json_decode('[
             {
@@ -384,21 +384,12 @@ class InterceptorTraitTest extends \Codeception\TestCase\Test
                 "id_str": "2222",
                 "text": "lol",
                 "created_at": "2000-10-10 12:26:00"
-            },
-            {
-                "user": {
-                    "id_str": "555",
-                    "screen_name": "cat",
-                    "name": "Alice"
-                },
-                "id_str": "1111",
-                "text": "Nyan",
-                "created_at": "2000-10-10 12:25:00"
             }
         ]');
         $bot = $this->getBot();
         $bot->marked['5555'] = true;
         $bot->marked['4444'] = true;
+        $bot->back_limit = 250;
         $actual = $bot->get('statuses/home_timeline');
         $this->assertEquals($expected, $actual);
     }

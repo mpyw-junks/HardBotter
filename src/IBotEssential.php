@@ -2,7 +2,7 @@
 
 namespace mpyw\HardBotter;
 
-use mpyw\Cowitter\Client;
+use mpyw\Cowitter\ClientInterface;
 
 /**
  * 基本メソッド群
@@ -16,7 +16,7 @@ interface IBotEssential
     /**
      * インスタンスを生成するコンストラクタ．
      *
-     * @param mpyw\Cowitter\Client $client
+     * @param mpyw\Cowitter\ClientInterface $client
      *          mpyw\Cowitter\Client の認証済みインスタンス．
      * @param string
      *          重複動作を防ぐために種々の情報を記録するファイル．
@@ -29,7 +29,7 @@ interface IBotEssential
      * @param int $back_limit
      *          遡ることを許可する秒数です．これより古いツイートは無視されます．
      */
-    public function __construct(Client $client, $filename = 'stamp.json', $span = 0, $mark_limit = 10000, $back_limit = 3600);
+    public function __construct(ClientInterface $client, $filename = 'stamp.json', $span = 0, $mark_limit = 10000, $back_limit = 3600);
 
     /**
      * ツイートのステータスIDをチェック済みであるとしてマークします．

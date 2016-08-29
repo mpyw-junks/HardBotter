@@ -41,11 +41,12 @@ class Bot implements IBotEssential, IBotHelper
 
         // 重複起動防止
         $file = new \SplFileObject($filename, 'a+b');
-        if (!$file->flock(LOCK_EX | LOCK_UN)) {
+        if (!$file->flock(LOCK_EX | LOCK_NB)) {
             throw new \RuntimeException('Failed to lock file.');
         }
 
         // JSONとして保存してあるデータを取得
+        clearstatcache();
         $json = $file->getSize() > 0
             ? json_decode($file->fread($file->getSize()), true)
             : [];
