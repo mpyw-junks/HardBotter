@@ -66,7 +66,7 @@ Co::wait(function () use ($bot) {
             },
 
             '/ホモ/' => function ($m) use ($status, $bot) {
-                return $bot->tweetAsync("{$status->user->name}はホモ");
+                return $bot->tweetAsync("┌(┌^o^)┐{$status->user->name}┌(┌^o^)┐");
             },
 
         ])) {
