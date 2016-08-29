@@ -187,7 +187,36 @@ class PseudoClient extends Client
         ];
     }
 
-    protected function POST_Friendships_create(array $params)
+    protected function POST_Statuses_Retweet(array $params)
+    {
+        return (object)[
+            'id_str' => (string)mt_rand(),
+            'text' => htmlspecialchars('RT @mpyw: <lol>', ENT_QUOTES, 'UTF-8'),
+            'creatd_at' => '2000-10-10 12:30:00',
+            'retweeted_status' => (object)[
+                'user' => (object)[
+                    'screen_name' => 'mpyw',
+                ],
+                'id_str' => $params['id'],
+                'text' => '<lol>',
+                'creatd_at' => '1970-01-01 00:00:00',
+            ],
+        ];
+    }
+
+    protected function POST_Favorites_Create(array $params)
+    {
+        return (object)[
+            'user' => (object)[
+                'screen_name' => 'mpyw',
+            ],
+            'id_str' => $params['id'],
+            'text' => htmlspecialchars('<lol>', ENT_QUOTES, 'UTF-8'),
+            'creatd_at' => '1970-01-01 00:00:00',
+        ];
+    }
+
+    protected function POST_Friendships_Create(array $params)
     {
         return (object)[
             'id_str' => $params['user_id'],
@@ -195,7 +224,7 @@ class PseudoClient extends Client
         ];
     }
 
-    protected function POST_Friendships_destroy(array $params)
+    protected function POST_Friendships_Destroy(array $params)
     {
         return (object)[
             'id_str' => $params['user_id'],

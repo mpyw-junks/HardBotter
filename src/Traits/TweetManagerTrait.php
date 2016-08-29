@@ -35,7 +35,9 @@ trait TweetManagerTrait
             self::out('REPLIED: ' . $result->text);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     public function tweet($text)
     {
@@ -53,13 +55,15 @@ trait TweetManagerTrait
             self::out('TWEETED: ' . $result->text);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     public function favorite(\stdClass $status)
     {
         $result = $this->post('favorites/create', ['id' => $status->id_str]);
         if ($result !== false) {
-            self::out('FAVORITED: ' . $result->text);
+            self::out('FAVORITED @' . $result->user->screen_name . ': ' . $result->text);
         }
         return $result;
     }
@@ -68,16 +72,19 @@ trait TweetManagerTrait
     {
         $result = (yield $this->postAsync('favorites/create', ['id' => $status->id_str]));
         if ($result !== false) {
-            self::out('FAVORITED: ' . $result->text);
+            self::out('FAVORITED @' . $result->user->screen_name . ': ' . $result->text);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 
     public function retweet(\stdClass $status)
     {
         $result = $this->post('statuses/retweet', ['id' => $status->id_str]);
         if ($result !== false) {
-            self::out('RETWEETED: ' . $status->text);
+            $original = $result->retweeted_status;
+            self::out('RETWEETED @' . $original->user->screen_name . ': ' . $original->text);
         }
         return $result;
     }
@@ -86,8 +93,11 @@ trait TweetManagerTrait
     {
         $result = (yield $this->postAsync('statuses/retweet', ['id' => $status->id_str]));
         if ($result !== false) {
-            self::out('RETWEETED: ' . $status->text);
+            $original = $result->retweeted_status;
+            self::out('RETWEETED @' . $original->user->screen_name . ': ' . $original->text);
         }
         yield Co::RETURN_WITH => $result;
+        // @codeCoverageIgnoreStart
     }
+    // @codeCoverageIgnoreEnd
 }

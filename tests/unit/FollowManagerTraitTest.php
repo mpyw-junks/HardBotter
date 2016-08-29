@@ -84,25 +84,25 @@ class FollowManagerTraitTest extends \Codeception\TestCase\Test
 
     public function testForceMutuals()
     {
-        $this->assertEquals(true, $this->getBot()->forceMutuals());
-        $this->assertEquals($GLOBALS['HARDBOTTER-BUFFER-OUTS'], [
+        $this->assertTrue($this->getBot()->forceMutuals());
+        $this->assertEquals([
             'UNFOLLOWED: @11',
             'FOLLOWED: @1',
             'FOLLOWED: @2',
             'FOLLOWED: @3',
             'FOLLOWED: @7',
-        ]);
+        ], $GLOBALS['HARDBOTTER-BUFFER-OUTS']);
     }
 
     public function testCollectAsyncFollowersIds()
     {Co::wait(function () {
-        $this->assertEquals(true, yield $this->getBot()->forceMutualsAsync());
-        $this->assertEquals($GLOBALS['HARDBOTTER-BUFFER-OUTS'], [
+        $this->assertTrue(yield $this->getBot()->forceMutualsAsync());
+        $this->assertEquals([
             'UNFOLLOWED: @11',
             'FOLLOWED: @1',
             'FOLLOWED: @2',
             'FOLLOWED: @3',
             'FOLLOWED: @7',
-        ]);
+        ], $GLOBALS['HARDBOTTER-BUFFER-OUTS']);
     });}
 }
