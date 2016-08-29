@@ -201,13 +201,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
         $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
 
         $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
         $actual = $this->getBot(0)->collect('statuses/home_timeline', 10);
-        $this->assertEquals($expected, $actual);
+        $this->assertFalse($actual);
         $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
     }
 
@@ -219,13 +214,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
 
         $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
         $actual = $this->getBot(0)->collect('statuses/home_timeline', 10);
-        $this->assertEquals($expected, $actual);
+        $this->assertFalse($actual);
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
     }
 
@@ -280,13 +270,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
         $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
 
         $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
         $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10);
-        $this->assertEquals($expected, $actual);
+        $this->assertFalse($actual);
         $this->assertEmpty($GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
     });}
 
@@ -298,13 +283,8 @@ class CollectorTraitTest extends \Codeception\TestCase\Test
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
 
         $GLOBALS[__NAMESPACE__ . '-ERROR-COUNTER'] = 1;
-        $expected = [
-            (object)['id_str' => '10'],
-            (object)['id_str' => '9'],
-            (object)['id_str' => '8'],
-        ];
         $actual = yield $this->getBot(0)->collectAsync('statuses/home_timeline', 10);
-        $this->assertEquals($expected, $actual);
+        $this->assertFalse($actual);
         $this->assertEquals([['Error', E_USER_WARNING]], $GLOBALS[__NAMESPACE__ . '-TRIGGER-ERROR-LOG']);
     });}
 

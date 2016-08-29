@@ -28,7 +28,7 @@ trait CollectorTrait
         }
         // 次のリクエストを実行してマージした結果を返す
         $children = $this->collect($endpoint, $followable_page_count - 1, $next_params);
-        return $children !== false ? array_merge($formatted, $children) : $formatted;
+        return $children !== false ? array_merge($formatted, $children) : false;
     }
 
     public function collectAsync($endpoint, $followable_page_count, array $params = [])
@@ -47,7 +47,7 @@ trait CollectorTrait
         }
         // 次のリクエストを実行してマージした結果を返す
         $children = (yield $this->collectAsync($endpoint, $followable_page_count - 1, $next_params));
-        yield CoInterface::RETURN_WITH => $children !== false ? array_merge($formatted, $children) : $formatted;
+        yield CoInterface::RETURN_WITH => $children !== false ? array_merge($formatted, $children) : false;
         // @codeCoverageIgnoreStart
     }
     // @codeCoverageIgnoreEnd
