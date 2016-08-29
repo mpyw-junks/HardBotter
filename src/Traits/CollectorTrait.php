@@ -3,6 +3,7 @@
 namespace mpyw\HardBotter\Traits;
 
 use mpyw\Co\CoInterface;
+use Aza\Components\Math\BigMath;
 
 /**
  * @method mixed get($endpoint, array $params = [])
@@ -61,10 +62,11 @@ trait CollectorTrait
         // GET statuses/home_timeline や GET search/tweets など
         if ($is_statuses || $is_searches) {
             $formatted = $is_statuses ? $result : $result->statuses;
+            $math = BigMath::createFromServerConfiguration();
             return [
                 $formatted,
                 $formatted
-                    ? ['max_id' => bcsub(end($formatted)->id_str, 1)] + $params
+                    ? ['max_id' => $math->subtract(end($formatted)->id_str, 1)] + $params
                     : null
             ];
         }
